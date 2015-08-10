@@ -5,8 +5,11 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-
 	"github.com/gorilla/context"
+	//"github.com/jenchik/stored"
+	"github.com/jenchik/stored/api"
+	"github.com/jenchik/stored/hugemap"
+	"github.com/jenchik/stored/multimap"
 )
 
 const (
@@ -84,6 +87,17 @@ func NewMobileDetect(r *http.Request, rules *rules) *MobileDetect {
 	return md
 }
 
+// NewMobileDetect creates the MobileDetect instance
+func NewMobileDetectInstance() *MobileDetect {
+	rules := NewRules()
+	md := &MobileDetect{
+		rules:              rules,
+		compiledRegexRules: make(map[string]*regexp.Regexp, len(rules.mobileDetectionRules())),
+		properties:         newProperties(),
+	}
+	return md
+}
+
 func getHttpHeaders(r *http.Request) map[string]string {
 	httpHeaders := map[string]string{
 		"SERVER_SOFTWARE":  r.Header.Get("SERVER_SOFTWARE"),
@@ -112,6 +126,11 @@ func (md *MobileDetect) PreCompileRegexRules() *MobileDetect {
 		md.match(ruleValue)
 	}
 	return md
+}
+
+func (md *MobileDetect) SetRequest(r *http.Request) {
+	md.userAgent = r.UserAgent()
+	md.httpHeaders = getHttpHeaders(r)
 }
 
 func (md *MobileDetect) SetUserAgent(userAgent string) *MobileDetect {
@@ -224,6 +243,67 @@ func (md *MobileDetect) matchDetectionRulesAgainstUA() bool {
 	return false
 }
 
+var cacheRules = hugemap.New()
+
+func getRuleFromCache(rule string) *regexp.Regexp {
+	if val, found := cacheRules.Find(rule); found {
+		return val.(*regexp.Regexp)
+	}
+
+	/*
+	re := regexp.MustCompile(rule)
+	cacheRules.Update(rule, func(value interface{}, found bool) interface{} {
+		return re
+	})
+    return re
+	*/
+
+	re := regexp.MustCompile(rule)
+	cacheRules.Atomic(func(m api.Mapper) {
+		if _, found := m.Find(rule); found {
+			return
+		}
+		m.SetKey(rule)
+		m.Update(re)
+	})
+	return re
+}
+
+var cacheHeaders = multimap.New(4, hugemap.New().(api.StoredCopier))
+
+func getHeaderFromCache(header, rule string, re *regexp.Regexp) bool {
+	key := strings.Join([]string{rule, header}, "")
+	if val, found := cacheHeaders.Find(key); found {
+		return val.(bool)
+	}
+	var ret bool
+	cacheHeaders.AtomicWait(func(m api.Mapper) {
+		if value, found := m.Find(key); found {
+			ret = value.(bool)
+			return
+		}
+		ret = re.MatchString(header)
+		m.SetKey(key)
+		m.Update(ret)
+	})
+	return ret
+}
+
+/*
+var cacheHeaders = stored.NewL2Cache(stored.Options{MaxItems: 200}, hugemap.New())
+
+func getHeaderFromCache(header, rule string, re *regexp.Regexp) bool {
+	key := strings.Join([]string{rule, header}, "")
+	item, err := cacheHeaders.GetItem(key, func(key string) (interface{}, error) {
+		return re.MatchString(header), nil
+	})
+	if err != nil {
+		return false
+	}
+	return item.(bool)
+}
+*/
+
 // Some detection rules are relative (not standard),because of the diversity of devices, vendors and
 // their conventions in representing the User-Agent or the HTTP headers.
 // This method will be used to check custom regexes against the User-Agent string.
@@ -232,14 +312,12 @@ func (md *MobileDetect) match(ruleValue string) bool {
 	//Escape the special character which is the delimiter
 	//rule = strings.Replace(rule, `\`, `\/`, -1)
 	ruleValue = `(?is)` + ruleValue
-	var re *regexp.Regexp
-	re = md.compiledRegexRules[ruleValue]
+	re := md.compiledRegexRules[ruleValue]
 	if nil == re {
-		md.compiledRegexRules[ruleValue] = regexp.MustCompile(ruleValue)
+		re = getRuleFromCache(ruleValue)
+		md.compiledRegexRules[ruleValue] = re
 	}
-	re = md.compiledRegexRules[ruleValue]
-	ret := re.MatchString(md.userAgent)
-	return ret
+	return getHeaderFromCache(md.userAgent, ruleValue, re)
 }
 
 // CheckHttpHeadersForMobile looks for mobile rules to confirm if the browser is a mobile browser

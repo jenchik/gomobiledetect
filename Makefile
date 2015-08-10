@@ -1,5 +1,6 @@
 packages: 
 	go get github.com/gorilla/context
+	go get github.com/jenchik/stored
 
 packages-testing:
 	go get code.google.com/p/go.tools/cmd/cover

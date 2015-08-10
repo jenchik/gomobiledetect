@@ -201,6 +201,17 @@ var (
 	}
 )
 
+var cacheProperties map[string]*regexp.Regexp
+
+func init() {
+	cacheProperties = make(map[string]*regexp.Regexp, len(props))
+	for _, property := range props {
+		for _, pattern := range property {
+			cacheProperties[pattern] = regexp.MustCompile(pattern)
+		}
+	}
+}
+
 type properties struct {
 	cache map[string]*regexp.Regexp
 }
@@ -213,19 +224,20 @@ func newProperties() *properties {
 }
 
 func (p *properties) preCompile() {
-	for _, property := range props {
-		for _, pattern := range property {
-			p.compiledRegexByPattern(pattern)
-		}
+	for pattern, re := range cacheProperties {
+		p.cache[pattern] = re
 	}
 }
 
 func (p *properties) compiledRegexByPattern(propertyPattern string) *regexp.Regexp {
 	re, ok := p.cache[propertyPattern]
 	if !ok {
-		p.cache[propertyPattern] = regexp.MustCompile(propertyPattern)
+		re, ok = cacheProperties[propertyPattern]
+		if !ok {
+			re = regexp.MustCompile(propertyPattern)
+		}
+		p.cache[propertyPattern] = re
 	}
-	re = p.cache[propertyPattern]
 	return re
 }
 
