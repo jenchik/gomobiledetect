@@ -11,6 +11,28 @@ GoMobileDetect is a lightweight package imported from PHP for detecting mobile d
 
 The package is imported from [MobileDetect](http://www.mobiledetect.net) which was originally written in PHP.
 
+### Compare Benchmarking
+
+#### original version
+```
+BenchmarkIsMobile	   50000	     29018 ns/op
+BenchmarkIs	  100000	     14361 ns/op
+BenchmarkIsKey	  100000	     14034 ns/op
+BenchmarkVersion	   50000	     25930 ns/op
+BenchmarkVersionKey	   50000	     25135 ns/op
+ok  	github.com/Shaked/gomobiledetect	24.815s
+```
+
+#### this package
+```
+BenchmarkIsMobile	  200000	      9071 ns/op
+BenchmarkIs	  500000	      3937 ns/op
+BenchmarkIsKey	  500000	      3699 ns/op
+BenchmarkVersion	  100000	     23219 ns/op
+BenchmarkVersionKey	  100000	     22770 ns/op
+ok  	github.com/jenchik/gomobiledetect	21.092s
+```
+
 ### Installation 
 
     $ go get github.com/Shaked/gomobiledetect 
