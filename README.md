@@ -13,7 +13,7 @@ The package is imported from [MobileDetect](http://www.mobiledetect.net) which w
 
 ### Compare Benchmarking
 
-#### original version
+#### original version [link](http://github.com/Shaked/gomobiledetect)
 ```
 BenchmarkIsMobile-4        100000         23107 ns/op
 BenchmarkIs-4              100000         15073 ns/op
