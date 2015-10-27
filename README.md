@@ -15,22 +15,29 @@ The package is imported from [MobileDetect](http://www.mobiledetect.net) which w
 
 #### original version
 ```
-BenchmarkIsMobile	   50000	     29018 ns/op
-BenchmarkIs	  100000	     14361 ns/op
-BenchmarkIsKey	  100000	     14034 ns/op
-BenchmarkVersion	   50000	     25930 ns/op
-BenchmarkVersionKey	   50000	     25135 ns/op
-ok  	github.com/Shaked/gomobiledetect	24.815s
+BenchmarkIsMobile-4        100000         23107 ns/op
+BenchmarkIs-4              100000         15073 ns/op
+BenchmarkIsKey-4           100000         15475 ns/op
+BenchmarkVersion-4         100000         16322 ns/op
+BenchmarkVersionKey-4      100000         16444 ns/op
 ```
 
-#### this package
+#### this package with stored/multimap in safe mode
 ```
-BenchmarkIsMobile	  200000	      9071 ns/op
-BenchmarkIs	  500000	      3937 ns/op
-BenchmarkIsKey	  500000	      3699 ns/op
-BenchmarkVersion	  100000	     23219 ns/op
-BenchmarkVersionKey	  100000	     22770 ns/op
-ok  	github.com/jenchik/gomobiledetect	21.092s
+BenchmarkIsMobile-4        500000          3078 ns/op
+BenchmarkIs-4             1000000          1227 ns/op
+BenchmarkIsKey-4          1000000          1069 ns/op
+BenchmarkVersion-4         100000         16325 ns/op
+BenchmarkVersionKey-4      100000         15928 ns/op
+```
+
+#### this package with stored/multimap in unsafe mode
+```
+BenchmarkIsMobile-4        200000          7948 ns/op
+BenchmarkIs-4              500000          4039 ns/op
+BenchmarkIsKey-4           500000          3840 ns/op
+BenchmarkVersion-4         100000         16260 ns/op
+BenchmarkVersionKey-4      100000         16517 ns/op
 ```
 
 ### Installation 
